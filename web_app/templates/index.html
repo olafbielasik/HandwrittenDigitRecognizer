@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Handwritten Digit Recognizer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #canvas {
+      border: 1px solid #ccc;
+      background-color: black;
+    }
+  </style>
+</head>
+<body class="bg-dark text-light">
+  <div class="container py-5">
+    <h1 class="text-center mb-4">Handwritten Digit Recognizer</h1>
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <canvas id="canvas" width="280" height="280"></canvas>
+      </div>
+    </div>
+    <div class="row justify-content-center mt-3">
+      <div class="col-md-6 text-center">
+        <button class="btn btn-primary me-2" onclick="clearCanvas()">Clear</button>
+        <button class="btn btn-success" onclick="sendCanvas()">Predict</button>
+        <input type="file" id="upload" class="form-control mt-3" accept="image/*">
+      </div>
+    </div>
+    <div class="row justify-content-center mt-3">
+      <div class="col-md-6 text-center">
+        <h2 id="result"></h2>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    var drawing = false;
+    canvas.addEventListener('mousedown', function(e) {
+      drawing = true;
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    });
+    canvas.addEventListener('mousemove', function(e) {
+      if (drawing) {
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 15;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.stroke();
+      }
+    });
+    canvas.addEventListener('mouseup', function(e) {
+      drawing = false;
+    });
+    function clearCanvas() {
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('result').innerText = "";
+    }
+    function sendCanvas() {
+      var dataURL = canvas.toDataURL("image/png");
+      fetch('/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ image: dataURL })
+      }).then(response => response.json())
+      .then(data => {
+        document.getElementById('result').innerText = "Prediction: " + data.prediction;
+      });
+    }
+    document.getElementById('upload').addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(event) {
+        var img = new Image();
+        img.onload = function() {
+          ctx.fillStyle = "black";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
